@@ -38,10 +38,3 @@ class v3:
 
     def unit(self):
         return v3(self.v1 / self.norm(), self.v2 / self.norm(), self.v3 / self.norm())
-
-
-a = v3(1, 1, 1)
-b = v3(1, np.pi / 4, 0, "p")
-print(a.v, b.v)
-print(a @ b, (a + b).v, (a - b).v, (a.cross(b)).v, (b * 2).v, (-a).v)
-print(a.norm(), b.norm())
