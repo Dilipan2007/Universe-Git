@@ -1,6 +1,4 @@
-from defs.vectors import v3
-from mechanics.classical import eq_of_motion
-import sympy
+from defs_tools.vectors import v3
 
 
 class particle:
@@ -18,12 +16,3 @@ class particle:
     def shape(self, s):  # shall be updated for different shapes
         if s == "sphere":
             self.inertia = (2 * self.mass * (self.r) ** 2) / 5
-
-
-class evolve:
-    def __init__(self, particles, V: sympy.Function, itime, ftime):
-        self.particles = particles
-        self.V = V
-        self.itime = itime
-        self.ftime = ftime
-        self.acc = eq_of_motion(self.particles[0], self.V)
