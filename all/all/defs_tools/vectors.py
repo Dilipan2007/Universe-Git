@@ -26,7 +26,7 @@ class v3:
         return v3(self.v1 * scalar, self.v2 * scalar, self.v3 * scalar)
 
     def __matmul__(self, other):
-        # Dot product
+        # Dot product  @
         return self.v1 * other.v1 + self.v2 * other.v2 + self.v3 * other.v3
 
     def cross(self, other):

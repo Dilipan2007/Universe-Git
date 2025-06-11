@@ -10,7 +10,7 @@ def make_rk_sys(
 ):
     u = np.array(
         [
-            np.array([sympy.symbols(f"u_{i}_{j}]") for j in range(order)])
+            np.array([sympy.symbols(f"u_{i}_{j}") for j in range(order)])
             for i in range(3)
         ]
     )  # Creates (u0, u1, ..., u_{n-1})
@@ -20,20 +20,24 @@ def make_rk_sys(
     sub = {}
     for i in range(3):
         subs = {sympy.diff(variables[i], t, j): u[i, j] for j in range(order)}
-        subs[variables[i]] = u[i, 0]
         sub.update(subs)
+
+    r1 = []
+    r2 = []
     for i in range(3):
         # Construct the system: dy/dt = [u1, u2, ..., f(t, u0,...,u_{n-1})]
-        rhs_exprs = list(u[i, 1:])  # u1, u2, ..., u_{n-2}
-        rhs_exprs.append(expr[i].subs(sub))  # u_{n-1}' = f(t, u0,...)
+        r1.append(*u[i, 1:])  # u1, u2, ..., u_{n-2}
+        r2.append(expr[i].subs(sub))  # u_{n-1}' = f(t, u0,...)
 
-        rhs.append(rhs_exprs)
+    rhs = r1 + r2
+
     # Convert to numeric function
-    rhs_func = sympy.lambdify((t, md.col_flatten(u)), rhs, "numpy")
+    rhs_func = sympy.lambdify((t, *md.col_flatten(u)), rhs, "numpy")
+    print(rhs)
 
     # Return function suitable for solve_ivp
     def sys(t, y):
-        return np.array(rhs_func(t, y), dtype=float).flatten()
+        return np.array(rhs_func(t, *y), dtype=float)
 
     return sys
 
