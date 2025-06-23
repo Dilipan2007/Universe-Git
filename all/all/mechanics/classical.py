@@ -98,7 +98,6 @@ class system:  # to return symbolic lagrangian equations for rk45 solve only in 
                 for partic in range(len(self.particles))
             ]
         )
-        print(acceleration)
         return acceleration
         # returning d2x/dt2(x,dx/dt,t) of all coordinates
 
@@ -125,7 +124,7 @@ class evolve:
 
     def collide(self, p1: particle, p2: particle):
         # refer all\all\core\refs\Colliding balls
-        rhat = v3.unit(p2.vel - p1.vel)
+        rhat = v3.unit(p2.pos - p1.pos)
         normal_v1 = rhat * (
             ((p1.mass - p2.mass) * (p1.vel @ rhat) + 2 * p2.mass * (p2.vel @ rhat))
             / (p1.mass + p2.mass)
@@ -203,11 +202,20 @@ class evolve:
                         v3.norm(self.particles[k].pos - self.particles[j].pos)
                         <= self.particles[k].r + self.particles[j].r
                     ):
+
                         self.particles[k], self.particles[j] = self.collide(
                             self.particles[k], self.particles[j]
                         )
             plot1[0].append(self.particles[0].pos.v[0])
-            plot1[1].append(intervals[i + 1])
-            plot2[0].append(self.particles[1].pos.v[0])
-            plot2[1].append(intervals[i + 1])
-        return plot1, plot2
+            plot1[1].append(self.particles[0].pos.v[1])
+            plot2[0].append(v3.unit(self.particles[0].pos) * -1)
+            plot2[1].append(
+                v3(
+                    1,
+                    (np.pi / 4),
+                    np.pi + v3.norm(self.particles[0].avel) * intervals[i + 1],
+                    "p",
+                )
+            )
+
+        return plot1, plot2, self.particles

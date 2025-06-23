@@ -33,7 +33,6 @@ def make_rk_sys(
 
     # Convert to numeric function
     rhs_func = sympy.lambdify((t, *md.col_flatten(u)), rhs, "numpy")
-    print(rhs)
 
     # Return function suitable for solve_ivp
     def sys(t, y):
