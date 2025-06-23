@@ -169,6 +169,7 @@ class evolve:
 
         plot1 = [[], []]
         plot2 = [[], []]
+        ret = {}
         for i in range(len(intervals) - 1):
             sol = np.array(
                 [
@@ -217,5 +218,6 @@ class evolve:
                     "p",
                 )
             )
-
-        return plot1, plot2, self.particles
+            ret[i] = self.particles[0].pos
+        # should return list of particles at each time for analemma
+        return ret
