@@ -14,32 +14,22 @@ class system:  # to return symbolic lagrangian equations for rk45 solve only in 
         self.p_v = p_v
         self.v_v = v_v
         self.t = t
-
-    def lagrangian(self):
-        lag = np.array(
-            [
-                (
-                    np.array(
+        self.lag = (
+            sum(
+                [
+                    sum(
                         [
-                            (
-                                (
-                                    self.particles[partic].mass
-                                    * (self.v_v[partic, axis] ** 2)
-                                )
-                                / 2
-                            )
-                            - self.V
+                            self.particles[partic].mass * self.v_v[partic, axis] ** 2
                             for axis in range(3)
                         ]
                     )
-                )
-                for partic in range(len(self.particles))
-            ]
-        )
-        return lag
+                    for partic in range(len(self.particles))
+                ]
+            )
+            / 2
+        ) - self.V
 
     def eqs_of_motion(self):
-        lag = self.lagrangian()
 
         expr = np.array(
             [
@@ -48,12 +38,12 @@ class system:  # to return symbolic lagrangian equations for rk45 solve only in 
                         [
                             sympy.diff(
                                 sympy.diff(
-                                    lag[partic, axis],
+                                    self.lag,
                                     self.v_v[partic, axis],
                                 ),
                                 self.t,
                             )
-                            - sympy.diff(lag[partic, axis], self.p_v[partic, axis])
+                            - sympy.diff(self.lag, self.p_v[partic, axis])
                             for axis in range(3)
                         ]
                     )
@@ -70,27 +60,6 @@ class system:  # to return symbolic lagrangian equations for rk45 solve only in 
                                 expr[partic, axis],
                                 sympy.diff(self.p_v[partic, axis], self.t, 2),
                             )[0]
-                            for axis in range(3)
-                        ]
-                    )
-                )
-                for partic in range(len(self.particles))
-            ]
-        )
-        lambdified_acc = np.array(
-            [
-                (
-                    np.array(
-                        [
-                            sympy.lambdify(
-                                (
-                                    self.p_v[partic, axis],
-                                    self.v_v[partic, axis],
-                                    self.t,
-                                ),
-                                acceleration[partic, axis],
-                                "numpy",
-                            )
                             for axis in range(3)
                         ]
                     )
@@ -160,40 +129,31 @@ class evolve:
     def run(self, n=5):
         # n = int((self.ftime - self.itime) / 0.1)
         intervals = np.linspace(self.itime, self.ftime, n)
-        rk_systems = np.array(
-            [
-                rk45_toolkit.make_rk_sys(self.eqs[partic], self.p_v[partic], self.t)
-                for partic in range(len(self.particles))
-            ]
-        )
+
+        rk_system = rk45_toolkit.make_rk_sys(self.eqs, self.p_v, self.t)
 
         plot1 = [[], []]
         plot2 = [[], []]
-        ret = {}
+        ret = [[], []]
         for i in range(len(intervals) - 1):
-            sol = np.array(
-                [
-                    solve_ivp(
-                        rk_systems[partic],
-                        [intervals[i], intervals[i + 1]],
-                        [
-                            *list(self.particles[partic].pos.v),
-                            *list(self.particles[partic].vel.v),
-                        ],
-                        t_eval=[intervals[i + 1]],
-                    )
-                    for partic in range(len(self.particles))
-                ]
+            arguement = []
+            for k in self.particles:
+                arguement.extend([*list(k.pos.v), *list(k.vel.v)])
+            sol = solve_ivp(
+                rk_system,
+                [intervals[i], intervals[i + 1]],
+                arguement,
+                t_eval=[intervals[i + 1]],
             )
 
             # sol contains: .y[0:3] position, .y[3:6] velocity and higher derivatives
             # updating
             for partic in range(len(self.particles)):
                 self.particles[partic].pos = v3(
-                    *[sol[partic].y[axis][0] for axis in range(3)]
+                    *[sol.y[partic * 6 + axis][0] for axis in range(3)]
                 )
                 self.particles[partic].vel = v3(
-                    *[sol[partic].y[axis][0] for axis in range(3, 6)]
+                    *[sol.y[partic * 6 + axis][0] for axis in range(3, 6)]
                 )
 
             # Colliding balls
@@ -209,15 +169,8 @@ class evolve:
                         )
             plot1[0].append(self.particles[0].pos.v[0])
             plot1[1].append(self.particles[0].pos.v[1])
-            plot2[0].append(v3.unit(self.particles[0].pos) * -1)
-            plot2[1].append(
-                v3(
-                    1,
-                    (np.pi / 4),
-                    np.pi + v3.norm(self.particles[0].avel) * intervals[i + 1],
-                    "p",
-                )
-            )
-            ret[i] = self.particles[0].pos
+            plot2[0].append(self.particles[1].pos.v[0])
+            plot2[1].append(self.particles[1].pos.v[1])
+            ret[0].append(self.particles[0].pos)
         # should return list of particles at each time for analemma
-        return ret
+        return plot1, plot2

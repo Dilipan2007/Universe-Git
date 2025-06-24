@@ -6,4 +6,4 @@ def col_flatten(
 ):  # for matrices---- to give input as  r+v+a+..(higher derivatives) , both are vectors
     rsize = len(arr)
     csize = len(arr[0])
-    return np.array([arr[r][c] for c in range(csize) for r in range(rsize)])
+    return np.array([arr[r, c] for c in range(csize) for r in range(rsize)])

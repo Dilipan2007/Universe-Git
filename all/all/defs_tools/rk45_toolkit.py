@@ -6,33 +6,49 @@ from typing import Sequence
 
 
 def make_rk_sys(
-    expr: sympy.Function, variables: Sequence[sympy.Function], t: sympy.Symbol, order=2
+    expr: Sequence[sympy.Function],
+    variables: Sequence[Sequence[sympy.Function]],
+    t: sympy.Symbol,
+    order=2,
 ):
+
+    # k for particle, i for axis, j for degree
     u = np.array(
         [
-            np.array([sympy.symbols(f"u_{i}_{j}") for j in range(order)])
-            for i in range(3)
+            np.array(
+                [
+                    np.array(
+                        [sympy.symbols(f"u_{k}_{i}_{j}") for j in range(order)]
+                    )  # k for kth particle
+                    for i in range(3)
+                ]
+            )
+            for k in range(len(expr))
         ]
-    )  # Creates (u0, u1, ..., u_{n-1})
-    # variables=[x,y,z]
-    # Substitution map: y(t), y'(t), ... => u0, u1, ...
-    rhs = []
+    )
+    # Creates [[[u_0 for velocity, u_1 for acceleraruion]* three coordinates]* N paerticles]
+    # variables=[[x_k,y_k,z_k]* for N paerticles]
+    dy = []  # symbolliacly dy=d(y)/dt
     sub = {}
-    for i in range(3):
-        subs = {sympy.diff(variables[i], t, j): u[i, j] for j in range(order)}
-        sub.update(subs)
+    y = (
+        []
+    )  # to have [..., u_k_0(i)_0, u_k_1_0, u_k_2_0, u_k_0_1, u_k_1_1, u_k_2_1,... for n particles]
+    for k in range(len(expr)):
+        for i in range(3):
+            subs = {sympy.diff(variables[k, i], t, j): u[k, i, j] for j in range(order)}
+            sub.update(subs)
 
-    r1 = []
-    r2 = []
-    for i in range(3):
-        # Construct the system: dy/dt = [u1, u2, ..., f(t, u0,...,u_{n-1})]
-        r1.append(*u[i, 1:])  # u1, u2, ..., u_{n-2}
-        r2.append(expr[i].subs(sub))  # u_{n-1}' = f(t, u0,...)
+    for k in range(len(expr)):
+        v = []
+        a = []
+        y.extend(*list([md.col_flatten(u[k])]))  # flattening
+        for i in range(3):
+            v.append(*u[k, i, 1:])
+            a.append(expr[k, i].subs(sub))
 
-    rhs = r1 + r2
-
+        dy.extend(v + a)
     # Convert to numeric function
-    rhs_func = sympy.lambdify((t, *md.col_flatten(u)), rhs, "numpy")
+    rhs_func = sympy.lambdify((t, *y), dy, "numpy")
 
     # Return function suitable for solve_ivp
     def sys(t, y):
