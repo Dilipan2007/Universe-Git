@@ -132,9 +132,7 @@ class evolve:
 
         rk_system = rk45_toolkit.make_rk_sys(self.eqs, self.p_v, self.t)
 
-        plot1 = [[], []]
-        plot2 = [[], []]
-        ret = [[], []]
+        ret = [[] for q in range(len(self.particles))]
         for i in range(len(intervals) - 1):
             arguement = []
             for k in self.particles:
@@ -145,8 +143,7 @@ class evolve:
                 arguement,
                 t_eval=[intervals[i + 1]],
             )
-
-            # sol contains: .y[0:3] position, .y[3:6] velocity and higher derivatives
+            # sol contains: .y[0:3] position, .y[3:6] velocity and that of next particle
             # updating
             for partic in range(len(self.particles)):
                 self.particles[partic].pos = v3(
@@ -167,10 +164,11 @@ class evolve:
                         self.particles[k], self.particles[j] = self.collide(
                             self.particles[k], self.particles[j]
                         )
-            plot1[0].append(self.particles[0].pos.v[0])
-            plot1[1].append(self.particles[0].pos.v[1])
-            plot2[0].append(self.particles[1].pos.v[0])
-            plot2[1].append(self.particles[1].pos.v[1])
-            ret[0].append(self.particles[0].pos)
+
+            for partic in range(len(self.particles)):
+                ret[partic].append(
+                    [self.particles[partic].pos.v, self.particles[partic].vel.v]
+                )
+
         # should return list of particles at each time for analemma
-        return plot1, plot2
+        return ret

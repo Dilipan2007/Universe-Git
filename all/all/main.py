@@ -15,18 +15,19 @@ G = 6.67430e-11
 r = 1
 
 part = particle(5, p, v, w, r)
-n = 2  # mass=1, pos=(0,1,2) vel=(1,0,0), w=(0,0,0), r=1
+n = 3  # mass=1, pos=(0,1,2) vel=(1,0,0), w=(0,0,0), r=1
 particles = np.array(
     [particle(i + 1, v3(0, 0, 0), v3(0, -10, 0), v3(0, 0, 0), 1) for i in range(n)]
 )
 p1 = particle(
-    1,
+    2,
     v3(0, 1, 0),
-    v3(1, -2, 0),
+    v3(-1, -1, 0),
     v3(7.2921159 * 10 ** (-5), np.pi, 0.4091, "p"),
     0.1,
 )  # for earth inn summer
-p2 = particle(1, v3(0, 0, 0), v3(1, 1, 0), p, 0.1)
+p2 = particle(1, v3(0, 0, 0), v3(2, 1, 0), p, 0.1)
+p3 = particle(1, v3(2, 1 / 2, 0), v3(-1, 3, 0), p, 0.1)
 t = sympy.symbols("time")
 p_vectors = np.array(
     [
@@ -42,9 +43,15 @@ v_vectors = np.array(
 )
 
 
-V = (p_vectors[0, 1] - p_vectors[1, 1]) ** 2
-test = classical.evolve([p1, p2], V, 0, 10, p_vectors, v_vectors, t)
-yo = test.run(n=1000)
-plt.scatter(yo[0][0], yo[0][1], s=0.5)
-plt.scatter(yo[1][0], yo[1][1], s=0.5)
+V = sum(
+    [
+        sum([(p_vectors[(i + 1) % 3, (j)] - p_vectors[i, j]) ** 2 for j in range(3)])
+        for i in range(3)
+    ]
+)
+test = classical.evolve([p1, p2, p3], V, 0, 10, p_vectors, v_vectors, t)
+yo = test.run(n=10000)
+plt.scatter(yo[0][0], yo[0][1], s=0.01)
+plt.scatter(yo[1][0], yo[1][1], s=0.01)
+plt.scatter(yo[2][0], yo[2][1], s=0.01)
 plt.show()

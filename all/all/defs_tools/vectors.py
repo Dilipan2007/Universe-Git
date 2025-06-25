@@ -12,6 +12,12 @@ class v3:
             self.v2 = v2
             self.v3 = v3
         self.v = np.array([self.v1, self.v2, self.v3])
+        self.r = np.linalg.norm(self.v)
+        if self.r == 0:
+            self.theta = 0
+        else:
+            self.theta = np.arccos(self.v3 / self.r)
+        self.phi = np.arctan2(self.v2, self.v1)
 
     def norm(self):
         return np.linalg.norm(self.v)
