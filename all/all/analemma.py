@@ -221,7 +221,7 @@ def analemma(
     plt.scatter(
         to_plot[0][body.range[0] : body.range[1]],
         to_plot[1][body.range[0] : body.range[1]],
-        s=0.01,
+        s=0.002,
         c="red",
     )
     plt.axis("equal")
@@ -237,11 +237,12 @@ for i in range(n):
     my_time = datetime.datetime(
         2025,
         6,
-        25 + (12 + int(mins) // 60) // 24,
-        (12 + int(mins) // 60) % 24,
+        25 + (0 + int(mins) // 60) // 24,
+        (0 + int(mins) // 60) % 24,
         int(mins % 60),
         tzinfo=ist,
     )
+    print(my_time)
     utc_time = my_time.astimezone(pytz.utc)
     t = ts.from_datetime(utc_time)
     analemma(initialize(Earth, t))
